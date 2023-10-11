@@ -471,17 +471,39 @@ class ActiveQuery extends Component implements ActiveQueryInterface
         $i = 0;
         $data = [];
         $orderArray = [];
-        foreach ($pks as $pk) {
-            if (++$i > $start && ($limit === null || $i <= $start + $limit)) {
+
+        if ($db instanceof ConnectionPhpRedis) {
+            /** @var \Redis $pipeline */
+            $pipeline = $db->pipeline();
+            foreach ($pks as $pk) {
                 $key = $modelClass::keyPrefix() . ':a:' . $modelClass::buildKey($pk);
-                $result = $db->executeCommand('HGETALL', [$key]);
-                if (!empty($result)) {
-                    $data[] = $result;
-                    if ($needSort) {
-                        $orderArray[] = $db->executeCommand('HGET', [$key, $orderColumn]);
+                if (++$i > $start && ($limit === null || $i <= $start + $limit)) {
+                    $pipeline->hGetAll($key);
+                }
+            }
+
+            $rawData = $pipeline->exec();
+            if (null !== $rawData) {
+                foreach ($rawData as $key => $items) {
+                    foreach ($items as $fieldName => $value) {
+                        $data[$key][] = $fieldName;
+                        $data[$key][] = $value;
                     }
-                    if ($type === 'One' && $this->orderBy === null) {
-                        break;
+                }
+            }
+        } else {
+            foreach ($pks as $pk) {
+                if (++$i > $start && ($limit === null || $i <= $start + $limit)) {
+                    $key = $modelClass::keyPrefix() . ':a:' . $modelClass::buildKey($pk);
+                    $result = $db->executeCommand('HGETALL', [$key]);
+                    if (!empty($result)) {
+                        $data[] = $result;
+                        if ($needSort) {
+                            $orderArray[] = $db->executeCommand('HGET', [$key, $orderColumn]);
+                        }
+                        if ($type === 'One' && $this->orderBy === null) {
+                            break;
+                        }
                     }
                 }
             }

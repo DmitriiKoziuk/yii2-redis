@@ -1,5 +1,5 @@
 {
-    "name": "yiisoft/yii2-redis",
+    "name": "dmitriikoziuk/yii2-redis",
     "description": "Redis Cache, Session and ActiveRecord for the Yii framework",
     "keywords": ["yii2", "redis", "active-record", "cache", "session"],
     "type": "yii2-extension",
@@ -19,7 +19,8 @@
     ],
     "require": {
         "yiisoft/yii2": "~2.0.39",
-        "ext-openssl": "*"
+        "ext-openssl": "*",
+        "ext-redis": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "<7",
@@ -46,5 +47,8 @@
         "allow-plugins": {
             "yiisoft/yii2-composer": true
         }
+    },
+    "replace": {
+        "yiisoft/yii2-redis": "self.version"
     }
 }
